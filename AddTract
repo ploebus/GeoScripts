@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jan 31 14:48:31 2020
+
+@author: jgarvey
+"""
+
+import requests
+import csv
+
+# https://geo.fcc.gov/api/census/area?lat=37.601&lon=-122.0161442&format=json
+
+in_file = 'YOUR INFILE'
+out_file = 'YOUR OUTFILE'
+
+
+def getTRACT(lat, lng):
+    print(lat,lng)
+    try:
+        resp = requests.get('https://geo.fcc.gov/api/census/area?', params={'lat': lat, 'lon': lng, 'format': 'json'})
+        data = resp.json()
+        # print(data)
+        print(data['results'][0]['block_fips'][5:11])
+        if data['results'][0]['block_fips'][5:11]:
+            return data['results'][0]['block_fips'][5:11]
+        else: 
+            return '99'
+    except:
+            return '99'
+        
+
+
+result_list = []
+with open(in_file, 'r') as csvfile:
+    reader = csv.DictReader(csvfile, delimiter='\t')
+    n = 1
+    for row in reader:
+        # print(row)
+        try:
+            row['tract'] = getTRACT(row['lat'],row['lng'])
+              
+        except:
+            row['tract'] = '99999'
+            print("fail")
+        result_list.append(row)
+
+with open(out_file, 'w') as outfile:
+    fieldnames = reader.fieldnames
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter='\t')
+    writer.writeheader()
+    writer.writerows(result_list)
+    print("Done!")
